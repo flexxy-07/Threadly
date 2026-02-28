@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:threadly/features/auth/data/datasources/auth_remote_datasource.dart';
@@ -29,13 +30,9 @@ final firebaseAuthProvider = Provider<fb.FirebaseAuth>(
 
 final firebaseFirestoreProvider = Provider((ref) => FirebaseFirestore.instance);
 
-/// TODO: Replace with your actual Web Client ID from
-/// Firebase Console → Authentication → Sign-in method → Google → Web SDK configuration
-const _webClientId = 'YOUR_WEB_CLIENT_ID.apps.googleusercontent.com';
-
 final googleSignInProvider = Provider<GoogleSignIn>(
   (ref) => GoogleSignIn(
-    clientId: kIsWeb ? _webClientId : null,
+    clientId: kIsWeb ? dotenv.env['GOOGLE_WEB_CLIENT_ID'] : null,
   ),
 );
 
