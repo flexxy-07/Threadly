@@ -1,0 +1,90 @@
+{
+  "project_info": {
+    "project_number": "630782007797",
+    "project_id": "threadly-e5fb2",
+    "storage_bucket": "threadly-e5fb2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:630782007797:android:2f6fbd44a7705e322168bc",
+        "android_client_info": {
+          "package_name": "com.example.threadly"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "630782007797-08meme061og025l9g51b1arqptijjqoq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCrwVS8fX3cgCRgm-JIsaVIFgrfd6lVrRE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "630782007797-08meme061og025l9g51b1arqptijjqoq.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "630782007797-nr2e26umdd24rt6pcp73kledmvmh3eav.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.threadly"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:630782007797:android:533609af17edd1482168bc",
+        "android_client_info": {
+          "package_name": "com.flexxy.threadly"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "630782007797-o5j0uakcpt0qqd4d49hucq96a6hncqc3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.flexxy.threadly",
+            "certificate_hash": "7ba79f455bdb413f47e57f214a8e00870c1da46d"
+          }
+        },
+        {
+          "client_id": "630782007797-08meme061og025l9g51b1arqptijjqoq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCrwVS8fX3cgCRgm-JIsaVIFgrfd6lVrRE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "630782007797-08meme061og025l9g51b1arqptijjqoq.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "630782007797-nr2e26umdd24rt6pcp73kledmvmh3eav.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.threadly"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

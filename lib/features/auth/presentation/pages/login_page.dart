@@ -1,14 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:threadly/core/common/sing_in_button.dart';
 import 'package:threadly/core/constants/constants.dart';
+import 'package:threadly/features/auth/presentation/pages/providers/auth_controller.dart';
 import 'package:threadly/theme/pallete.dart';
-import 'package:google_fonts/google_fonts.dart';
 
-class LoginPage extends StatelessWidget {
+class LoginPage extends ConsumerWidget {
   const LoginPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Show a SnackBar whenever sign-in fails
+    ref.listen<AsyncValue>(authControllerProvider, (_, next) {
+      next.whenOrNull(
+        error: (err, _) => ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(err.toString()),
+            backgroundColor: Colors.red,
+          ),
+        ),
+      );
+    });
     return Scaffold(
       appBar: AppBar(
         backgroundColor: AppPallete.blackColor,
@@ -22,18 +35,27 @@ class LoginPage extends StatelessWidget {
           height: 30,
           width: 30,
           decoration: BoxDecoration(color: Colors.transparent),
-          child:null
+          child: null,
         ),
         actions: [
           Row(
-            children: [TextButton(child: const Text('Skip',
-            style: TextStyle(color: Colors.blue, fontWeight: FontWeight.w500),), onPressed: () {})],
+            children: [
+              TextButton(
+                child: const Text(
+                  'Skip',
+                  style: TextStyle(
+                    color: Colors.blue,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                onPressed: () {},
+              ),
+            ],
           ),
         ],
       ),
       body: Center(
         child: Column(
-          //  mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             const SizedBox(height: 50),
@@ -70,11 +92,10 @@ class LoginPage extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: const SingInButton(),
-            )
-            
-                ],
-              ),
             ),
+          ],
+        ),
+      ), 
     );
   }
 }
