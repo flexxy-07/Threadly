@@ -2,9 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:threadly/core/common/loader.dart';
 import 'package:threadly/features/auth/presentation/pages/providers/auth_controller.dart';
+import 'package:threadly/features/home/drawer/community_list_drawer.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
+
+  void displayDrawer(BuildContext context) {
+    Scaffold.of(context).openDrawer();
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -12,11 +17,22 @@ class HomePage extends ConsumerWidget {
     if (user == null) return const Loader();
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Home'),
+        leading: Builder(
+          builder: (context) {
+            return IconButton(onPressed: () => displayDrawer(context), icon: Icon(Icons.menu));
+          }
+        ),
+        title: Text('Home'),
+        centerTitle: false,
+        actions: [
+          IconButton(onPressed: () {}, icon: Icon(Icons.search)),
+          IconButton(
+            icon: CircleAvatar(backgroundImage: NetworkImage(user.profilePic)),
+            onPressed: () {},
+          ),
+        ],
       ),
-      body: Center(
-        child: Text(user.name),
-      ),
+      drawer: CommunityListDrawer(),
     );
   }
 }
