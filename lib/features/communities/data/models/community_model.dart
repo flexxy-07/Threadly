@@ -4,16 +4,16 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 
 class Community {
-  final String id;
   final String name;
+  final String title;
   final String banner;
   final String avatar;
   final List<String> members;
   final List<String> mods;
 
   Community({
-    required this.id,
     required this.name,
+    required this.title,
     required this.banner,
     required this.avatar,
     required this.members,
@@ -21,16 +21,16 @@ class Community {
   });
 
   Community copyWith({
-    String? id,
     String? name,
+    String? title,
     String? banner,
     String? avatar,
     List<String>? members,
     List<String>? mods,
   }) {
     return Community(
-      id: id ?? this.id,
       name: name ?? this.name,
+      title: title ?? this.title,
       banner: banner ?? this.banner,
       avatar: avatar ?? this.avatar,
       members: members ?? this.members,
@@ -40,8 +40,8 @@ class Community {
 
   Map<String, dynamic> toMap() {
     return <String, dynamic>{
-      'id': id,
       'name': name,
+      'title': title,
       'banner': banner,
       'avatar': avatar,
       'members': members,
@@ -51,12 +51,12 @@ class Community {
 
   factory Community.fromMap(Map<String, dynamic> map) {
     return Community(
-      id: map['id'] as String,
       name: map['name'] as String,
-      banner: map['banner'] as String,
-      avatar: map['avatar'] as String,
-      members: List<String>.from((map['members'] as List<dynamic>)),
-      mods: List<String>.from((map['mods'] as List<dynamic>)),
+      title: map['title'] as String,
+      banner: map['banner'] as String? ?? '',
+      avatar: map['avatar'] as String? ?? '',
+      members: List<String>.from((map['members'] as List<dynamic>?) ?? []),
+      mods: List<String>.from((map['mods'] as List<dynamic>?) ?? []),
     );
   }
 
@@ -66,7 +66,7 @@ class Community {
 
   @override
   String toString() {
-    return 'Community(id: $id, name: $name, banner: $banner, avatar: $avatar, members: $members, mods: $mods)';
+    return 'Community(name: $name, title: $title, banner: $banner, avatar: $avatar, members: $members, mods: $mods)';
   }
 
   @override
@@ -74,8 +74,8 @@ class Community {
     if (identical(this, other)) return true;
   
     return 
-      other.id == id &&
       other.name == name &&
+      other.title == title &&
       other.banner == banner &&
       other.avatar == avatar &&
       listEquals(other.members, members) &&
@@ -84,8 +84,8 @@ class Community {
 
   @override
   int get hashCode {
-    return id.hashCode ^
-      name.hashCode ^
+    return name.hashCode ^
+      title.hashCode ^
       banner.hashCode ^
       avatar.hashCode ^
       members.hashCode ^

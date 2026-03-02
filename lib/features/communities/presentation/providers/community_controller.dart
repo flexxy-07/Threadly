@@ -1,40 +1,72 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:routemaster/routemaster.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:threadly/core/constants/constants.dart';
+import 'package:threadly/core/providers/storage_providers.dart';
 import 'package:threadly/core/utils.dart';
 import 'package:threadly/features/auth/presentation/pages/providers/auth_controller.dart';
 import 'package:threadly/features/communities/data/models/community_model.dart';
 import 'package:threadly/features/communities/domain/repository/community_repository.dart';
 
-final userCommunitiesProvider = StreamProvider((ref){
+final userCommunitiesProvider = StreamProvider((ref) {
   final communityController = ref.watch(communityControllerProvider.notifier);
 
   return communityController.getUserCommunities();
 });
 
-final communityControllerProvider = StateNotifierProvider<CommunityController, bool>((ref){
-  final communityRepository = ref.watch(communityRepositoryProvider);
-  return CommunityController(communityRepository: communityRepository, ref: ref);
+final communityControllerProvider =
+    StateNotifierProvider<CommunityController, bool>((ref) {
+      final communityRepository = ref.watch(communityRepositoryProvider);
+      return CommunityController(
+        communityRepository: communityRepository,
+        ref: ref,
+        storageRepository: ref.watch(storageRepositoryProvider),
+        supabaseClient: ref.watch(supabaseClientProvider),
+      );
+    });
+
+final getCommunityByNameProvider = StreamProvider.family((ref, String name) {
+  final communityController = ref.watch(communityControllerProvider.notifier);
+
+  return communityController.getCommunityByName(name);
 });
 
-class CommunityController extends StateNotifier<bool>{
+class CommunityController extends StateNotifier<bool> {
   final CommunityRepository _communityRepository;
   final Ref _ref;
+  final StorageRepository _storageRepository;
+  final SupabaseClient _supabaseClient;
+  
   CommunityController({
     required CommunityRepository communityRepository,
     required Ref ref,
-
+    required StorageRepository storageRepository,
+    required SupabaseClient supabaseClient,
   }) : _communityRepository = communityRepository,
-       _ref = ref, super(false);
+       _storageRepository = storageRepository,
+       _ref = ref,
+       _supabaseClient = supabaseClient,
+       super(false);
 
   void createCommunity(String name, BuildContext context) async {
+    // Get the authenticated user's ID from Supabase
+    final currentUser = _supabaseClient.auth.currentUser;
+    final uid = currentUser?.id;
+    
+    // Check if user is authenticated
+    if (uid == null || uid.isEmpty) {
+      showSnackBar(context, "You must be logged in to create a community");
+      return;
+    }
+
     state = true;
-    final uid = _ref.read(userProvider)?.uid ?? '';
     Community community = Community(
-      id: name,
       name: name,
+      title: name,
       banner: Constants.bannerDefault,
       avatar: Constants.avatarDefault,
       members: [uid],
@@ -49,9 +81,90 @@ class CommunityController extends StateNotifier<bool>{
       });
     });
   }
-// we cant use ref in repository
+
+  // Get user communities from Supabase
   Stream<List<Community>> getUserCommunities() {
-    final uid = _ref.read(userProvider)?.uid ?? '';
+    final uid = _supabaseClient.auth.currentUser?.id;
+    if (uid == null || uid.isEmpty) {
+      return Stream.value([]);
+    }
     return _communityRepository.getUserCommunities(uid);
+  }
+
+  Stream<Community> getCommunityByName(String name) {
+    return _communityRepository.getCommunityByName(name);
+  }
+
+  void editCommunity({
+    required File? bannerFile,
+    required File? profileFile,
+    required BuildContext context,
+    required Community community,
+  }) async {
+    state = true;
+    if (profileFile != null) {
+      final res = await _storageRepository.storeFile(
+        bucket: 'community-images',
+        path: 'profiles',
+        id: community.name,
+        file: profileFile,
+      );
+      res.fold(
+        (l) => showSnackBar(context, l.message),
+        (r) => community = community.copyWith(avatar: r),
+      );
+
+    }
+    if (bannerFile != null) {
+        final res = await _storageRepository.storeFile(
+          bucket: 'community-images',
+          path: 'banners',
+          id: community.name,
+          file: bannerFile,
+        );
+        res.fold(
+          (l) => showSnackBar(context, l.message),
+          (r) => community = community.copyWith(banner: r),
+        );
+      }
+  final res = await _communityRepository.editCommunity(community);
+  state = false;
+
+  res.fold(
+    (l) => showSnackBar(context, l.message),
+    (r) {
+      // Invalidate the cache to force a refresh of the community data
+      _ref.invalidate(getCommunityByNameProvider(community.name));
+      showSnackBar(context, "Community updated successfully!");
+      Routemaster.of(context).pop();
+    },
+  );
+      
+
+  }
+
+  void joinCommunity(String communityName, BuildContext context) async {
+    // Get the authenticated user's ID from Supabase
+    final currentUser = _supabaseClient.auth.currentUser;
+    final uid = currentUser?.id;
+    
+    // Check if user is authenticated
+    if (uid == null || uid.isEmpty) {
+      showSnackBar(context, "You must be logged in to join a community");
+      return;
+    }
+
+    state = true;
+    await _communityRepository.joinCommunity(communityName, uid).then((res) {
+      state = false;
+      res.fold(
+        (l) => showSnackBar(context, l.message),
+        (r) {
+          // Invalidate both providers to refresh the UI
+          _ref.invalidate(getCommunityByNameProvider(communityName));
+          _ref.invalidate(userCommunitiesProvider);
+          showSnackBar(context, "Successfully joined community!");
+        },
+      );});
   }
 }

@@ -1,14 +1,10 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart' as fb;
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_sign_in/google_sign_in.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:threadly/core/constants/constants.dart';
 import 'package:threadly/features/auth/data/datasources/auth_remote_datasource.dart';
 import 'package:threadly/features/auth/data/models/user_model.dart';
 import 'package:threadly/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:threadly/features/auth/domain/entities/user.dart' as entity;
-import 'package:threadly/features/auth/domain/usecases/sign_in_with_google.dart';
 
 // ---------------------------------------------------------------------------
 // Dependency providers
@@ -24,28 +20,18 @@ class UserNotifier extends Notifier<UserModel?> {
 
 final userProvider = NotifierProvider<UserNotifier, UserModel?>(UserNotifier.new);
 
-final firebaseAuthProvider = Provider<fb.FirebaseAuth>(
-  (ref) => fb.FirebaseAuth.instance,
+final supabaseClientProvider = Provider<SupabaseClient>(
+  (ref) => Supabase.instance.client,
 );
 
-final firebaseFirestoreProvider = Provider((ref) => FirebaseFirestore.instance);
-
-final googleSignInProvider = Provider<GoogleSignIn>(
-  (ref) => GoogleSignIn(
-    clientId: kIsWeb ? dotenv.env['GOOGLE_WEB_CLIENT_ID'] : null,
-  ),
-);
-
-/// Exposes Firebase auth state changes as a stream.
-final authStateChangeProvider = StreamProvider<fb.User?>((ref) {
-  return ref.watch(firebaseAuthProvider).authStateChanges();
+/// Exposes Supabase auth state changes as a stream.
+final authStateChangeProvider = StreamProvider<User?>((ref) {
+  return ref.watch(supabaseClientProvider).auth.onAuthStateChange.map((data) => data.session?.user);
 });
 
 final authRemoteDatasourceProvider = Provider<AuthRemoteDatasource>((ref) {
   return AuthRemoteDatasource(
-    firebaseAuth: ref.watch(firebaseAuthProvider),
-    googleSignIn: ref.watch(googleSignInProvider),
-    firestore: ref.watch(firebaseFirestoreProvider),
+    supabase: ref.watch(supabaseClientProvider),
   );
 });
 
@@ -53,10 +39,6 @@ final authRepositoryProvider = Provider<AuthRepositoryImpl>((ref) {
   return AuthRepositoryImpl(
     remoteDatasource: ref.watch(authRemoteDatasourceProvider),
   );
-});
-
-final signInWithGoogleUsecaseProvider = Provider<SignInWithGoogle>((ref) {
-  return SignInWithGoogle(authRepository: ref.watch(authRepositoryProvider));
 });
 
 // ---------------------------------------------------------------------------
@@ -74,24 +56,31 @@ final authControllerProvider =
 
 class AuthController extends AsyncNotifier<entity.User?> {
   /// Called once when the provider is first read.
-  /// Returns the user that is already signed-in via Firebase, or null.
+  /// Returns the user that is already signed-in via Supabase, or null.
   @override
   Future<entity.User?> build() async {
-    final currentUser = ref.watch(firebaseAuthProvider).currentUser;
+    final currentUser = ref.watch(supabaseClientProvider).auth.currentUser;
     if (currentUser == null) return null;
     return entity.User(
-      uid: currentUser.uid,
-      name: currentUser.displayName ?? '',
+      uid: currentUser.id,
+      name: currentUser.userMetadata?['name'] ?? '',
       email: currentUser.email ?? '',
-      profilePic: currentUser.photoURL ?? '',
+      profilePic: Constants.avatarDefault,
     );
   }
 
-  /// Signs the user in with Google.
-  /// Handles the [Either] result from the use case and updates [userProvider].
-  Future<void> signInWithGoogle() async {
+  /// Signs up a new user with email and password.
+  Future<void> signUpWithEmail({
+    required String email,
+    required String password,
+    required String name,
+  }) async {
     state = const AsyncLoading();
-    final result = await ref.read(signInWithGoogleUsecaseProvider).call();
+    final result = await ref.read(authRepositoryProvider).signUpWithEmail(
+      email: email,
+      password: password,
+      name: name,
+    );
     result.fold(
       (failure) => state = AsyncError(failure.message, StackTrace.current),
       (user) {
@@ -101,11 +90,29 @@ class AuthController extends AsyncNotifier<entity.User?> {
     );
   }
 
-  /// Signs the user out from both Google and Firebase.
+  /// Signs in an existing user with email and password.
+  Future<void> signInWithEmail({
+    required String email,
+    required String password,
+  }) async {
+    state = const AsyncLoading();
+    final result = await ref.read(authRepositoryProvider).signInWithEmail(
+      email: email,
+      password: password,
+    );
+    result.fold(
+      (failure) => state = AsyncError(failure.message, StackTrace.current),
+      (user) {
+        ref.read(userProvider.notifier).setUser(user as UserModel);
+        state = AsyncData(user);
+      },
+    );
+  }
+
+  /// Signs the user out from Supabase.
   Future<void> signOut() async {
     state = const AsyncLoading();
-    await ref.read(googleSignInProvider).signOut();
-    await ref.read(firebaseAuthProvider).signOut();
+    await ref.read(supabaseClientProvider).auth.signOut();
     ref.read(userProvider.notifier).setUser(null);
     state = const AsyncData(null);
   }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
 import 'package:threadly/core/common/error_text.dart';
 import 'package:threadly/core/common/loader.dart';
+import 'package:threadly/features/communities/data/models/community_model.dart';
 import 'package:threadly/features/communities/presentation/providers/community_controller.dart';
 
 
@@ -12,6 +13,10 @@ class CommunityListDrawer extends ConsumerWidget {
 
   void navigateToCreateCommunity(BuildContext context) {
     Routemaster.of(context).push('/create-community');
+  }
+
+  void navigateToCommunity(BuildContext context, Community community) {
+    Routemaster.of(context).push('/t/${community.name}');
   }
 
   @override
@@ -27,7 +32,7 @@ class CommunityListDrawer extends ConsumerWidget {
             ref.watch(userCommunitiesProvider).when(data: (communities) => Expanded(
               child: ListView.builder(
                 itemCount: communities.length,
-                itemBuilder: (BuildContext context, int index) => ListTile(title: Text('t/${communities[index].name}'),onTap: (){}, leading: CircleAvatar(
+                itemBuilder: (BuildContext context, int index) => ListTile(title: Text('t/${communities[index].name}'),onTap: () => navigateToCommunity(context, communities[index]), leading: CircleAvatar(
                 backgroundImage: NetworkImage(
                   communities[index].avatar,
                 ),

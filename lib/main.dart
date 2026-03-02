@@ -1,20 +1,21 @@
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:routemaster/routemaster.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:threadly/core/common/error_text.dart';
 import 'package:threadly/core/common/loader.dart';
 import 'package:threadly/features/auth/presentation/pages/providers/auth_controller.dart';
-import 'package:threadly/firebase_options.dart';
+import 'package:threadly/supabase_options.dart';
 import 'package:threadly/router.dart';
 import 'package:threadly/theme/pallete.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: '.env');
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
+  await Supabase.initialize(
+    url: SupabaseConfig.supabaseUrl,
+    anonKey: SupabaseConfig.supabaseAnonKey,
   );
   runApp(const ProviderScope(child: MyApp()));
 }

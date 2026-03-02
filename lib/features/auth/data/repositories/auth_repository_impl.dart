@@ -11,9 +11,36 @@ class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl({required this.remoteDatasource});
 
   @override
-  FutureEither<User> signInWithGoogle() async {
+  FutureEither<User> signUpWithEmail({
+    required String email,
+    required String password,
+    required String name,
+  }) async {
     try {
-      final result = await remoteDatasource.signInWithGoogle();
+      final result = await remoteDatasource.signUpWithEmail(
+        email: email,
+        password: password,
+        name: name,
+      );
+      return result.fold(
+        (failure) => left(failure),
+        (userModel) => right(userModel),
+      );
+    } catch (e) {
+      return left(Failure(e.toString()));
+    }
+  }
+
+  @override
+  FutureEither<User> signInWithEmail({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final result = await remoteDatasource.signInWithEmail(
+        email: email,
+        password: password,
+      );
       return result.fold(
         (failure) => left(failure),
         (userModel) => right(userModel),

@@ -1,6 +1,7 @@
-class FirebaseConstants {
-  static const String usersCollection = 'users';
-  static const String postsCollection = 'posts';
-  static const String commentsCollection = 'comments';
-  static const String communitiesCollection = 'communities';
+/// Database table names for Supabase PostgreSQL
+class DatabaseConstants {
+  static const String usersTable = 'users';
+  static const String postsTable = 'posts';
+  static const String commentsTable = 'comments';
+  static const String communitiesTable = 'communities';
 }
