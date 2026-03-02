@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:threadly/core/common/loader.dart';
+import 'package:threadly/features/communities/presentation/providers/community_controller.dart';
 
 class CreateCommunityPage extends ConsumerStatefulWidget {
   const CreateCommunityPage({super.key});
@@ -16,15 +18,22 @@ class _CreateCommunityPageState extends ConsumerState<CreateCommunityPage> {
     super.dispose();
     communityNameController.dispose();
   }
-
+  
+  void createCommunity() {
+    ref.read(communityControllerProvider.notifier).createCommunity(
+      communityNameController.text.trim(),
+      context,
+    );
+  }
   @override
   Widget build(BuildContext context) {
+    final isLoading = ref.watch(communityControllerProvider);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Create a community'),
         centerTitle: true,
       ),
-      body: Padding(
+      body: isLoading ? const Loader() :  Padding(
         padding: const EdgeInsets.all(10),
         child: Column(
           children: [
@@ -42,7 +51,7 @@ class _CreateCommunityPageState extends ConsumerState<CreateCommunityPage> {
             ),
 
             const SizedBox(height: 20),
-            ElevatedButton(onPressed: () {},
+            ElevatedButton(onPressed: createCommunity,
             style: ElevatedButton.styleFrom(
               minimumSize: const Size(double.infinity, 50),
               backgroundColor: Colors.blueAccent,
