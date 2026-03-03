@@ -35,6 +35,13 @@ final getCommunityByNameProvider = StreamProvider.family((ref, String name) {
   return communityController.getCommunityByName(name);
 });
 
+final searchCommunityProvider = FutureProvider.family((ref, String query) {
+  final communityController = ref.watch(communityControllerProvider.notifier);
+
+  return communityController.searchCommunities(query);
+});
+
+
 class CommunityController extends StateNotifier<bool> {
   final CommunityRepository _communityRepository;
   final Ref _ref;
@@ -102,6 +109,7 @@ class CommunityController extends StateNotifier<bool> {
     required Community community,
   }) async {
     state = true;
+
     if (profileFile != null) {
       final res = await _storageRepository.storeFile(
         bucket: 'community-images',
@@ -111,36 +119,49 @@ class CommunityController extends StateNotifier<bool> {
       );
       res.fold(
         (l) => showSnackBar(context, l.message),
-        (r) => community = community.copyWith(avatar: r),
+        (r) {
+          // Add cache-bust parameter properly to the URL
+          final separator = r.contains('?') ? '&' : '?';
+          final newUrl = '$r${separator}v=${DateTime.now().millisecondsSinceEpoch}';
+          community = community.copyWith(avatar: newUrl);
+        },
       );
-
     }
+
     if (bannerFile != null) {
-        final res = await _storageRepository.storeFile(
-          bucket: 'community-images',
-          path: 'banners',
-          id: community.name,
-          file: bannerFile,
-        );
-        res.fold(
-          (l) => showSnackBar(context, l.message),
-          (r) => community = community.copyWith(banner: r),
-        );
-      }
-  final res = await _communityRepository.editCommunity(community);
-  state = false;
+      final res = await _storageRepository.storeFile(
+        bucket: 'community-images',
+        path: 'banners',
+        id: community.name,
+        file: bannerFile,
+      );
+      res.fold(
+        (l) => showSnackBar(context, l.message),
+        (r) {
+          // Add cache-bust parameter properly to the URL
+          final separator = r.contains('?') ? '&' : '?';
+          final newUrl = '$r${separator}v=${DateTime.now().millisecondsSinceEpoch}';
+          community = community.copyWith(banner: newUrl);
+        },
+      );
+    }
 
-  res.fold(
-    (l) => showSnackBar(context, l.message),
-    (r) {
-      // Invalidate the cache to force a refresh of the community data
-      _ref.invalidate(getCommunityByNameProvider(community.name));
-      showSnackBar(context, "Community updated successfully!");
-      Routemaster.of(context).pop();
-    },
-  );
-      
+    final res = await _communityRepository.editCommunity(community);
+    state = false;
 
+    res.fold(
+      (l) => showSnackBar(context, l.message),
+      (r) {
+        // Clear image cache to force reload
+        imageCache.clear();
+        imageCache.clearLiveImages();
+        
+        // Invalidate the cache to force a refresh of the community data
+        _ref.invalidate(getCommunityByNameProvider(community.name));
+        showSnackBar(context, "Community updated successfully!");
+        Routemaster.of(context).pop();
+      },
+    );
   }
 
   void joinCommunity(String communityName, BuildContext context) async {
@@ -165,6 +186,11 @@ class CommunityController extends StateNotifier<bool> {
           _ref.invalidate(userCommunitiesProvider);
           showSnackBar(context, "Successfully joined community!");
         },
-      );});
+      );
+    });
+  }
+
+  Future<List<Community>> searchCommunities(String query){
+    return _communityRepository.searchCommunities(query);
   }
 }

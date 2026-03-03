@@ -22,12 +22,6 @@ class CommunityPage extends ConsumerWidget {
           .watch(getCommunityByNameProvider(name))
           .when(
             data: (community) {
-              // Get the current user safely
-              String? userId;
-              userAsync.whenData((user) {
-                userId = user?.uid;
-              });
-
               return NestedScrollView(
                 headerSliverBuilder: (context, innerBoxIsScrolled) {
                   return [
@@ -39,8 +33,15 @@ class CommunityPage extends ConsumerWidget {
                         children: [
                           Positioned.fill(
                             child: Image.network(
-                              community.banner,
+                              community.getBannerUrl(),
+                              key: ValueKey(community.getBannerUrl()),
                               fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  color: Colors.grey[300],
+                                  child: const Icon(Icons.image_not_supported),
+                                );
+                              },
                             ),
                           ),
                         ],
@@ -53,7 +54,8 @@ class CommunityPage extends ConsumerWidget {
                           Align(
                             alignment: Alignment.centerLeft,
                             child: CircleAvatar(
-                              backgroundImage: NetworkImage(community.avatar),
+                              key: ValueKey(community.getAvatarUrl()),
+                              backgroundImage: NetworkImage(community.getAvatarUrl()),
                               radius: 35,
                             ),
                           ),

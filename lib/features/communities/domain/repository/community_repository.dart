@@ -113,4 +113,15 @@ class CommunityRepository {
       return left(Failure(e.toString()));
     }
   }
+
+  Future<List<Community>> searchCommunities(String query) async {
+  if (query.trim().isEmpty) return [];
+
+  final data = await _supabase
+      .from(DatabaseConstants.communitiesTable)
+      .select()
+      .ilike('name', '%$query%');
+
+  return data.map((e) => Community.fromMap(e)).toList();
+}
 }

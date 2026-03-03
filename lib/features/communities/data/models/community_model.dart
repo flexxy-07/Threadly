@@ -38,6 +38,30 @@ class Community {
     );
   }
 
+  /// Get banner URL with cache-bust parameter to force fresh load
+  String getBannerUrl() {
+    if (banner.isEmpty) return banner;
+    // Check if URL already has a timestamp parameter
+    if (banner.contains('v=')) {
+      return banner; // Already has cache-bust parameter
+    }
+    // Add timestamp with proper separator (? or &)
+    final separator = banner.contains('?') ? '&' : '?';
+    return '$banner${separator}v=${DateTime.now().millisecondsSinceEpoch}';
+  }
+
+  /// Get avatar URL with cache-bust parameter to force fresh load
+  String getAvatarUrl() {
+    if (avatar.isEmpty) return avatar;
+    // Check if URL already has a timestamp parameter
+    if (avatar.contains('v=')) {
+      return avatar; // Already has cache-bust parameter
+    }
+    // Add timestamp with proper separator (? or &)
+    final separator = avatar.contains('?') ? '&' : '?';
+    return '$avatar${separator}v=${DateTime.now().millisecondsSinceEpoch}';
+  }
+
   Map<String, dynamic> toMap() {
     return <String, dynamic>{
       'name': name,

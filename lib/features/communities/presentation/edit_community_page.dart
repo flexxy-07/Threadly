@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:routemaster/routemaster.dart';
 import 'package:threadly/core/common/error_text.dart';
 import 'package:threadly/core/common/loader.dart';
 import 'package:threadly/core/constants/constants.dart';
@@ -50,6 +51,7 @@ class _EditCommunityPageState extends ConsumerState<EditCommunityPage> {
       community: community,
 
     );
+    Routemaster.of(context).pop();
   }
 
   @override
@@ -111,9 +113,18 @@ class _EditCommunityPageState extends ConsumerState<EditCommunityPage> {
                         : SizedBox(
                             height: 150,
                             width: double.infinity,
-                            child: Image.network(
-                              community.banner,
+                            child: Image(
+                              key: ValueKey(community.getBannerUrl()),
+                              image: NetworkImage(community.getBannerUrl()),
                               fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  color: Colors.grey[300],
+                                  child: const Icon(Icons.image_not_supported),
+                                );
+                              },
+                              // cacheWidth: 500,
+                              // cacheHeight: 200,
                             ),
                           ),
                     ),
@@ -131,10 +142,14 @@ class _EditCommunityPageState extends ConsumerState<EditCommunityPage> {
                       alignment: Alignment.bottomRight,
                       children: [
                         CircleAvatar(
+                          key: ValueKey(community.getAvatarUrl()),
                           radius: 60,
                           backgroundImage: profileFile != null 
                             ? FileImage(profileFile!)
-                            : NetworkImage(community.avatar) as ImageProvider,
+                            : NetworkImage(community.getAvatarUrl()) as ImageProvider,
+                          onBackgroundImageError: (exception, stackTrace) {
+                            // Handle image error
+                          },
                         ),
                         Positioned(
                           bottom: 0,
